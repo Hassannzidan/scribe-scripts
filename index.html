@@ -1,0 +1,682 @@
+<title>سكريبتات التسجيل</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600&family=Readex+Pro:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow reading column, sticky case strip on top, one case on screen at a time. */
+:root {
+  --bg: #f6f7f5; --surface: #ffffff; --fg: #1d2421; --muted: #5d6963; --line: #dde2de;
+  --doc: #0f6b5c; --doc-soft: #e3f1ee; --pat: #8a5a12; --pat-soft: #f6ecdc; --com: #7a3f73; --com-soft: #f3e6f1;
+  --cue: #b3261e; --cue-soft: #fbe7e5;
+  --font-display: "Readex Pro", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  --read: 19px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131816; --surface: #1b2220; --fg: #e6ebe8; --muted: #9aa7a1; --line: #2c3532;
+  --doc: #5cc4b0; --doc-soft: #183330; --pat: #e0b46a; --pat-soft: #33281a; --com: #d79bd0; --com-soft: #322231;
+  --cue: #ff8a80; --cue-soft: #3a1f1d; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #131816; --surface: #1b2220; --fg: #e6ebe8; --muted: #9aa7a1; --line: #2c3532;
+  --doc: #5cc4b0; --doc-soft: #183330; --pat: #e0b46a; --pat-soft: #33281a; --com: #d79bd0; --com-soft: #322231;
+  --cue: #ff8a80; --cue-soft: #3a1f1d; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); line-height: 1.7; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.wrap { max-width: 44rem; margin: 0 auto; padding-block: 0 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar-inner { max-width: 44rem; margin: 0 auto; display: flex; align-items: center; gap: 8px; padding-block: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.strip { display: flex; gap: 6px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+.strip a { flex: none; min-width: 2.5rem; text-align: center; padding: 4px 8px; border-radius: 8px; color: var(--muted); text-decoration: none; font: 600 15px/1.6 var(--font-display); font-variant-numeric: tabular-nums; }
+.strip a[aria-current="true"] { background: var(--fg); color: var(--bg); }
+.size { display: flex; gap: 4px; flex: none; }
+button { font: 600 15px/1 var(--font-body); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--doc); outline-offset: 2px; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; line-height: 1.3; margin: 0; }
+h1 { font-size: 1.7rem; margin-block: 1.5rem 0.5rem; }
+h2 { font-size: 1.5rem; }
+.lead { color: var(--muted); margin: 0 0 1.25rem; font-size: 1rem; }
+.legend { display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 1.5rem; font-size: 0.98rem; }
+.legend p { margin: 0; }
+.cards { display: grid; gap: 8px; }
+.card { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+.card .num { font: 700 1.25rem/1 var(--font-display); color: var(--doc); font-variant-numeric: tabular-nums; min-width: 2rem; }
+.card-body { display: grid; flex: 1; min-width: 0; }
+.card small { color: var(--muted); font-size: 0.9rem; }
+.flag { font-size: 0.8rem; color: var(--cue); background: var(--cue-soft); padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.case-head { padding-block: 1.5rem 1rem; display: grid; gap: 12px; }
+.eyebrow { margin: 0; color: var(--doc); font: 600 0.85rem/1 var(--font-display); letter-spacing: 0.02em; }
+.facts { margin: 0; display: grid; gap: 6px; font-size: 0.95rem; }
+.facts div { display: grid; grid-template-columns: 4.5rem 1fr; gap: 8px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; min-width: 0; }
+.cast { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+.cast-row { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+.tag { font: 600 0.85rem/1 var(--font-display); padding: 5px 10px; border-radius: 999px; }
+.tag.d { background: var(--doc-soft); color: var(--doc); }
+.tag.p { background: var(--pat-soft); color: var(--pat); }
+.tag.c { background: var(--com-soft); color: var(--com); }
+.notes { background: var(--cue-soft); border-radius: 12px; padding: 12px 14px; display: grid; gap: 6px; font-size: 0.98rem; }
+.notes p { margin: 0; }
+code { font-family: ui-monospace, Consolas, monospace; font-size: 0.9em; background: var(--line); padding: 0 4px; border-radius: 4px; direction: ltr; unicode-bidi: isolate; }
+.dialogue { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 1rem; }
+.line { display: grid; grid-template-columns: 4.75rem 1fr; gap: 10px; padding: 8px 0; align-items: baseline; }
+.line p { margin: 0; font-size: var(--read); min-width: 0; overflow-wrap: anywhere; }
+.who { font: 600 0.85rem/1.4 var(--font-display); text-align: start; }
+.line.d .who { color: var(--doc); }
+.line.p .who { color: var(--pat); }
+.line.c .who { color: var(--com); }
+.line.d p { color: var(--fg); }
+.line.p p, .line.c p { padding-inline-start: 12px; border-inline-start: 3px solid var(--pat-soft); }
+.line.c p { border-color: var(--com-soft); }
+.term { font-weight: 600; color: inherit; background: linear-gradient(transparent 62%, var(--doc-soft) 62%); unicode-bidi: plaintext; }
+.stage, .action { color: var(--muted); font-size: 0.85em; font-style: italic; }
+.stage::before, .action::before { content: "("; } .stage::after, .action::after { content: ")"; }
+.stage { margin-inline: 4px; }
+.action .stage { margin: 0; font-size: 1em; }
+.action .stage::before, .action .stage::after { content: none; }
+.action { padding: 4px 0 4px 0; padding-inline-start: calc(4.75rem + 10px); font-size: 0.95rem; }
+.cue { display: inline-block; margin-inline-start: 6px; font: 600 0.8rem/1.6 var(--font-display); color: var(--cue); background: var(--cue-soft); padding: 0 8px; border-radius: 999px; font-style: normal; }
+.pager { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.step { color: var(--doc); text-decoration: none; font-weight: 600; padding: 8px 0; }
+@media (max-width: 420px) {
+  .line { grid-template-columns: 1fr; gap: 2px; padding: 6px 0; }
+  .action { padding-inline-start: 0; }
+}
+</style>
+
+<div class="bar" dir="rtl" lang="ar"><div class="bar-inner">
+  <nav class="strip" aria-label="الكشوفات">
+    <a href="#home" data-target="home">الكل</a>
+    <a href="#c01" data-target="c01">01</a>
+    <a href="#c02" data-target="c02">02</a>
+    <a href="#c03" data-target="c03">03</a>
+    <a href="#c04" data-target="c04">04</a>
+    <a href="#c05" data-target="c05">05</a>
+    <a href="#c06" data-target="c06">06</a>
+    <a href="#c07" data-target="c07">07</a>
+    <a href="#c08" data-target="c08">08</a>
+    <a href="#c09" data-target="c09">09</a>
+    <a href="#c10" data-target="c10">10</a>
+  </nav>
+  <div class="size" role="group" aria-label="حجم الخط">
+    <button type="button" id="smaller" aria-label="تصغير الخط">أ−</button>
+    <button type="button" id="larger" aria-label="تكبير الخط">أ+</button>
+  </div>
+</div></div>
+
+<main class="wrap" dir="rtl" lang="ar">
+  <section id="home" hidden>
+    <h1>سكريبتات التسجيل</h1>
+    <p class="lead">١٠ كشوفات تمثيلية. انت دايماً <b>الدكتور</b>، وصاحبك المريض أو المرافق. اختار كشف وابدأ.</p>
+    <div class="legend">
+      <p><b class="term">الكلمة دي</b> كلمة مهمة (دوا، جرعة، رقم). انطقها بوضوح زي ما هي.</p>
+      <p><span class="stage">تعليمات</span> متتقريش، دي حركة أو وصف.</p>
+      <p><span class="cue">↯ هنا التاني يقاطع</span> التاني يبدأ يتكلم قبل ما الجملة تخلص.</p>
+      <p>اتكلموا طبيعي. لو غيّرت كلمة، عادي، كمّل.</p>
+    </div>
+    <div class="cards">
+<a class="card" href="#c01"><span class="num">01</span><span class="card-body"><strong>متابعة سكر (باطنة)</strong><small>صاحبك: المريض</small></span><span class="flag">تعليمات خاصة</span></a>
+<a class="card" href="#c02"><span class="num">02</span><span class="card-body"><strong>ضغط وقلب (باطنة/قلب)</strong><small>صاحبك: المريضة/المريض</small></span></a>
+<a class="card" href="#c03"><span class="num">03</span><span class="card-body"><strong>دور برد وحرارة (ممارس عام)</strong><small>صاحبك: المريض</small></span><span class="flag">تعليمات خاصة</span></a>
+<a class="card" href="#c04"><span class="num">04</span><span class="card-body"><strong>جهاز هضمي / جرثومة المعدة</strong><small>صاحبك: المريضة</small></span></a>
+<a class="card" href="#c05"><span class="num">05</span><span class="card-body"><strong>جلدية / إكزيما</strong><small>صاحبك: المريض</small></span></a>
+<a class="card" href="#c06"><span class="num">06</span><span class="card-body"><strong>عظام / ألم أسفل الظهر</strong><small>صاحبك: المريض</small></span></a>
+<a class="card" href="#c07"><span class="num">07</span><span class="card-body"><strong>أطفال / التهاب الأذن الوسطى</strong><small>صاحبك: الأم</small></span><span class="flag">تعليمات خاصة</span></a>
+<a class="card" href="#c08"><span class="num">08</span><span class="card-body"><strong>صداع نصفي مع مقاطعة وكلام فوق بعض</strong><small>صاحبك: المريضة</small></span><span class="flag">تعليمات خاصة</span></a>
+<a class="card" href="#c09"><span class="num">09</span><span class="card-body"><strong>متابعة سكر في مكان فيه دوشة (نفس كشف 01)</strong><small>صاحبك: المريض</small></span><span class="flag">تعليمات خاصة</span></a>
+<a class="card" href="#c10"><span class="num">10</span><span class="card-body"><strong>غدة درقية (إنجليزي كتير / code-switching عالي)</strong><small>صاحبك: المريضة</small></span><span class="flag">تعليمات خاصة</span></a>
+    </div>
+  </section>
+<section class="case" id="c01" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 01</p>
+    <h2>متابعة سكر (باطنة)</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>أرقام تحاليل، جرعات، أسماء أدوية تجارية وعلمية</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية، laptop على المكتب</dd></div>
+      <div><dt>المدة</dt><dd>4–5 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريض</span><span>صاحبك · راجل 55 سنة</span></div></div>
+    <div class="notes"><p>اتكلموا بشكل طبيعي. لو حد زوّد كلمة أو غيّر ترتيب جملة عادي، بس بعد التسجيل عدّل السكريبت على اللي اتقال فعلاً.</p></div>
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>أهلاً يا حاج، اتفضل استريح. عامل إيه النهارده؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>الحمد لله يا دكتور، ماشي الحال. جاي أتابع السكر زي ما قولتلي المرة اللي فاتت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام. عملت التحاليل اللي طلبناها؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>أيوه، عملتها الأسبوع اللي فات، أهي معايا. <span class="stage">المريض يدّي الورق لـ الدكتور</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>خليني أشوف. الـ <b class="term">HbA1c</b> طالع <b class="term">8.2</b>، والمرة اللي فاتت كان <b class="term">7.6</b>. يعني زاد شوية.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يا خبر، ده وحش؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>مش وحش أوي، بس مش مظبوط. إحنا عايزينه تحت <b class="term">7</b>. والسكر الصايم كام؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>الصايم كان <b class="term">160</b>، والفاطر بعد ساعتين كان <b class="term">240</b>.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>طيب. إنت ماشي على العلاج إزاي دلوقتي؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>باخد <b class="term">Glucophage</b> <b class="term">1000</b> الصبح وبالليل، وحباية <b class="term">Amaryl</b> <b class="term">2 مللي</b> قبل الفطار.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بتاخدهم بانتظام؟ ولا بتنسى؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>بصراحة يا دكتور ساعات بنسى جرعة الليل، خصوصاً لما أكون برا البيت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ده مهم جداً. الـ <b class="term">Metformin</b> لازم ياخد وقته وبانتظام. والأكل عامل إيه؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>الأكل مش أحسن حاجة، رمضان كان قريب والعزومات كتير، وبحب الرز والعيش.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ماشي، ده بيفرق جامد. في أي أعراض؟ عطش زيادة؟ دخول حمام كتير بالليل؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>آه العطش موجود، وبقوم بالليل مرتين تلاتة.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في تنميل في رجلك أو حرقان؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>ساعات تنميل في صوابع الرجل، بس مش على طول.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>طيب ده محتاجين نتابعه. هقيس لك الضغط دلوقتي. <span class="stage">الدكتور يقيس الضغط</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الضغط <b class="term">130 على 85</b>، كويس. والوزن النهارده <b class="term">92 كيلو</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>زاد كيلو تقريباً عن المرة اللي فاتت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه. بص يا حاج، التحاليل التانية كويسة، الـ <b class="term">creatinine</b> <b class="term">0.9</b> يعني الكلى سليمة الحمد لله.</p></div>
+<div class="line p"><span class="who">المريض</span><p>الحمد لله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هنعمل كده: هنزوّد الـ <b class="term">Amaryl</b> لـ <b class="term">3 مللي</b> قبل الفطار، والـ <b class="term">Glucophage</b> زي ما هو <b class="term">1000 مرتين في اليوم</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يعني حباية الأماريل تبقى تلاتة بدل اتنين؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بالظبط، <b class="term">3 مللي</b>. بس خلي بالك، لو حسيت برعشة أو عرق أو دوخة، ده ممكن يكون <b class="term">hypoglycemia</b>، يعني السكر وطي. ساعتها تاكل حاجة مسكرة على طول وتقيس.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وعايزك تقيس السكر في البيت، صايم وبعد الأكل بساعتين، تلات مرات في الأسبوع، وتكتبهم في ورقة.</p></div>
+<div class="line p"><span class="who">المريض</span><p>عندي جهاز في البيت، هقيس إن شاء الله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وكمان عايز <b class="term">fundus examination</b> عند دكتور العيون، وتحليل <b class="term">urine albumin</b> عشان نطمن على الكلى.</p></div>
+<div class="line p"><span class="who">المريض</span><p>حاضر. ورجلي؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هكتبلك <b class="term">Milga</b> حباية <b class="term">مرة في اليوم</b> للتنميل، وخلي بالك من رجلك، أي جرح تبعتلي على طول.</p></div>
+<div class="line p"><span class="who">المريض</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>والمشي يا حاج، نص ساعة كل يوم، وقلل الرز والعيش الأبيض.</p></div>
+<div class="line p"><span class="who">المريض</span><p>هحاول والله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هنشوفك بعد <b class="term">3 شهور</b> بتحليل <b class="term">HbA1c</b> جديد. لو في أي حاجة قبل كده كلمني.</p></div>
+<div class="line p"><span class="who">المريض</span><p>متشكر يا دكتور، ربنا يخليك.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>العفو، ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c02">التالي ← 02 · ضغط وقلب (باطنة/قلب)</a><span></span></nav>
+</section>
+<section class="case" id="c02" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 02</p>
+    <h2>ضغط وقلب (باطنة/قلب)</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>قراءات ضغط بالأرقام، أسماء أدوية قلب، مصطلحات تحاليل دهون</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>4–5 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريضة/المريض</span><span>صاحبك · 48 سنة</span></div></div>
+    
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>اتفضل. خير، إيه اللي جايبك النهارده؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>يا دكتور أنا بقالي حوالي شهر عندي صداع ورا راسي، خصوصاً الصبح، وقست الضغط في الصيدلية لقيته عالي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>كان كام؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>كان <b class="term">160 على 100</b>، والصيدلي قالي لازم أروح لدكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>كويس إنك جيت. قبل كده كان عندك ضغط؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>الدكتور قالي من سنتين إن الضغط على الحدود، وكتبلي <b class="term">Concor</b> <b class="term">5</b>، بس أنا بطلته بعد شهرين لما حسيت إني كويس.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، ده اللي بيحصل كتير. الضغط مش بيتعالج وخلاص، ده علاج مستمر. في حد في العيلة عنده ضغط أو قلب؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>بابا الله يرحمه كان عنده ضغط، وعمل <b class="term">جلطة في القلب</b> وهو عنده ستين سنة.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ربنا يرحمه. بتدخن؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>آه، حوالي علبة في اليوم.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>طيب، ده لازم نتكلم فيه. في نهجان؟ ألم في الصدر؟ تورم في الرجلين؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>نهجان بسيط لما أطلع السلم، بس مفيش ألم في الصدر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام. خليني أقيس الضغط. <span class="stage">الدكتور يقيس</span> الضغط دلوقتي <b class="term">150 على 95</b>. والنبض <b class="term">88</b>.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>لسه عالي يعني.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، عالي. عندك تحاليل؟</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>عملت تحاليل دم من أسبوعين، أهي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>خليني أشوف. الـ <b class="term">cholesterol</b> <b class="term">240</b>، والـ <b class="term">LDL</b> <b class="term">160</b>، والـ <b class="term">HDL</b> <b class="term">38</b>، والـ <b class="term">triglycerides</b> <b class="term">210</b>. كل ده عالي شوية. ده اسمه <b class="term">dyslipidemia</b>.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>يعني إيه يا دكتور؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>يعني الدهون في الدم عالية، ومع الضغط والتدخين ده بيزوّد خطر القلب. عشان كده هنتعامل معاهم كلهم.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هنرجع الـ <b class="term">Concor</b> <b class="term">5 مللي</b> مرة واحدة الصبح، وهنضيف <b class="term">Amlodipine</b> <b class="term">5 مللي</b> بالليل.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>اللي اسمه <b class="term">Norvasc</b>؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>أيوه، <b class="term">Norvasc</b> هو نفسه <b class="term">Amlodipine</b>. وهنضيف <b class="term">Lipitor</b> <b class="term">20 مللي</b> بالليل للكوليسترول.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>تلات أدوية مرة واحدة؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، بس كل واحد ليه دوره. الـ <b class="term">Amlodipine</b> ممكن يعمل تورم بسيط في الرجل، لو حصل قولّي.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>حاضر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وعايز <b class="term">ECG</b> رسم قلب دلوقتي هنا في العيادة، وعايزك تعمل <b class="term">echo</b> على القلب.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>والملح يا ريت تقلله جداً، والمخللات والجبنة القديمة. والسجاير لازم تبطلها، دي أهم من أي دوا.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>هحاول يا دكتور، بس صعب.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>عارف إنه صعب، ممكن نساعدك. نبدأ بإننا نقلل للنص الشهر ده.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وقيس الضغط في البيت كل يوم الصبح وبالليل، واكتب الأرقام. لو لقيته فوق <b class="term">180</b> أو حسيت بألم في صدرك تيجي الطوارئ على طول.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>نشوفك بعد <b class="term">أسبوعين</b> بالقراءات، وبعد <b class="term">3 شهور</b> نعيد تحليل الدهون.</p></div>
+<div class="line p"><span class="who">المريضة/المريض</span><p>متشكر يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ألف سلامة عليك.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c03">التالي ← 03 · دور برد وحرارة (ممارس عام)</a><a class="step" href="#c01">→ السابق 01 · متابعة سكر (باطنة)</a></nav>
+</section>
+<section class="case" id="c03" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 03</p>
+    <h2>دور برد وحرارة (ممارس عام)</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>عامية تقيلة وكلام سريع، كشف بسيط (control للمقارنة)</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>3–4 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريض</span><span>صاحبك · شاب 25 سنة</span></div></div>
+    <div class="notes"><p>الكشف ده اتكلموا فيه بسرعة وبعامية زي الشارع. ده الكشف السهل، وهو اللي هنقارن بيه.</p></div>
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>أهلاً، اتفضل. مالك؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>والله يا دكتور أنا تعبان أوي من امبارح، جسمي كله مكسّر وسخن.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>من امتى بالظبط؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>من امبارح العصر كده، بدأت بزور بيوجعني وبعدين السخونية.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>قستها؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>آه، كانت <b class="term">38 ونص</b> بالليل.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في كحة؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>كحة ناشفة كده، ومناخيري مسدودة ورشح.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في نهجان؟ ضيق في النفس؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>لأ، الحمد لله مفيش.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في حد في البيت عنده نفس الأعراض؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>أخويا الصغير كان عنده نفس الحكاية الأسبوع اللي فات.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، يبقى غالباً عدوى. خليني أكشف. افتح بقك وقول آه. <span class="stage">الدكتور يكشف على الزور</span></p></div>
+<div class="line p"><span class="who">المريض</span><p>آآآه.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الزور أحمر شوية، بس مفيش صديد على اللوز. خليني أسمع الصدر. خد نفس عميق... تاني... تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الصدر نضيف الحمد لله. والحرارة دلوقتي <b class="term">37.9</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يعني إيه يا دكتور؟ محتاج حقنة؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لأ خالص. ده <b class="term">upper respiratory tract infection</b>، يعني دور برد فيروسي. ومش محتاج <b class="term">antibiotic</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>بس أنا كنت فاكر هاخد <b class="term">Augmentin</b> زي المرة اللي فاتت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لأ، الـ <b class="term">Augmentin</b> ده مضاد حيوي، مش بيشتغل على الفيروس. لو أخدته من غير لزمة هيضرك أكتر ما ينفعك.</p></div>
+<div class="line p"><span class="who">المريض</span><p>آه ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هتاخد <b class="term">Panadol</b> <b class="term">500</b> حبايتين كل <b class="term">6 ساعات</b> لو في سخونية أو وجع.</p></div>
+<div class="line p"><span class="who">المريض</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وبخاخة <b class="term">Otrivin</b> للمناخير، <b class="term">بخة في كل ناحية مرتين في اليوم</b>، بس متكملش أكتر من <b class="term">5 أيام</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وأقراص استحلاب للزور، وتشرب سوايل دافية كتير، ليمون بالعسل، وترتاح.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ينفع أروح الشغل؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>يومين راحة أحسن، عشان متعديش اللي حواليك. هكتبلك إجازة <b class="term">يومين</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>الله يخليك.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لو السخونية فضلت أكتر من <b class="term">3 أيام</b>، أو بقى في نهجان، أو بلغم لونه أخضر، تيجي تاني.</p></div>
+<div class="line p"><span class="who">المريض</span><p>حاضر يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c04">التالي ← 04 · جهاز هضمي / جرثومة المعدة</a><a class="step" href="#c02">→ السابق 02 · ضغط وقلب (باطنة/قلب)</a></nav>
+</section>
+<section class="case" id="c04" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 04</p>
+    <h2>جهاز هضمي / جرثومة المعدة</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>مصطلحات إنجليزي في نص الكلام، أدوية بجرعات ومدد، أسماء إجراءات</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>4–5 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريضة</span><span>صاحبك · 35 سنة</span></div></div>
+    
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>اتفضلي يا فندم. خير؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يا دكتور أنا عندي وجع في معدتي بقاله حوالي شهرين، وحرقان، وخصوصاً لما أكون جعانة.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الوجع فين بالظبط؟ وريني.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>هنا، فوق السُرة كده، في النص.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بيزيد بعد الأكل ولا بيقل؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>بيقل شوية بعد ما آكل، بس بعد ساعتين بيرجع تاني. وساعات بالليل يصحيني.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في ترجيع؟ أو ترجيع لونه غامق؟ أو البراز لونه أسود؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>لأ، مفيش ترجيع، بس في غثيان الصبح. والبراز عادي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>كويس. في نقص في الوزن؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>لأ، بالعكس.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بتاخدي مسكنات كتير؟ زي <b class="term">Brufen</b> أو <b class="term">Cataflam</b>؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>آه بصراحة، باخد <b class="term">Cataflam</b> كتير عشان الصداع، تقريباً كل يوم.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، ده ممكن يكون سبب. عملتي أي تحاليل؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>عملت تحليل <b class="term">H. pylori</b> في البراز، <b class="term">stool antigen</b>، وطلع positive.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام، يبقى عندك <b class="term">جرثومة المعدة</b>، <b class="term">H. pylori infection</b>، ومعاها غالباً <b class="term">gastritis</b> من المسكنات. خليني أكشف على البطن. <span class="stage">الدكتور يكشف</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في <b class="term">tenderness</b> بسيط في الـ <b class="term">epigastrium</b>، بس مفيش حاجة تقلق.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يعني محتاجة منظار؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>مش دلوقتي. هنعالج الجرثومة الأول. لو مفيش تحسن، أو ظهرت أي علامة زي ترجيع دم أو براز أسود، نعمل <b class="term">upper endoscopy</b>.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>العلاج هيكون تلات أدوية مع بعض لمدة <b class="term">14 يوم</b>. أول واحد <b class="term">Nexium</b> <b class="term">40 مللي</b> <b class="term">مرتين في اليوم</b>، قبل الفطار وقبل العشا بنص ساعة.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>نيكسيام أربعين مرتين.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بالظبط. التاني <b class="term">Klacid</b> <b class="term">500 مللي</b> <b class="term">مرتين في اليوم</b> بعد الأكل. والتالت <b class="term">Amoxicillin</b> <b class="term">1 جرام</b> <b class="term">مرتين في اليوم</b>.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>عندك حساسية من البنسلين؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>لأ، مفيش، أخدت <b class="term">Augmentin</b> قبل كده عادي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام، الحمد لله. الـ <b class="term">Klacid</b> ممكن يعمل طعم معدن في البق، ده طبيعي. وممكن إسهال خفيف.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>والأهم: توقفي الـ <b class="term">Cataflam</b> خالص. لو عندك صداع خدي <b class="term">Panadol</b> بدل منه.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>حاضر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وتقللي القهوة، والأكل الحراق، ومتناميش بعد الأكل على طول.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وبعد ما تخلصي العلاج بـ <b class="term">4 أسابيع</b>، تعيدي تحليل <b class="term">stool antigen</b> عشان نتأكد إن الجرثومة راحت. ولازم توقفي الـ <b class="term">Nexium</b> <b class="term">أسبوعين</b> قبل التحليل، عشان النتيجة متطلعش غلط.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يعني أوقف النيكسيام أسبوعين قبل التحليل.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بالظبط. وتيجي بالنتيجة.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>متشكرة يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>العفو، ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c05">التالي ← 05 · جلدية / إكزيما</a><a class="step" href="#c03">→ السابق 03 · دور برد وحرارة (ممارس عام)</a></nav>
+</section>
+<section class="case" id="c05" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 05</p>
+    <h2>جلدية / إكزيما</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>إنجليزي كتير في كلام الدكتور، أسماء كريمات ومدد استخدام</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>3–4 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتورة/الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريض</span><span>صاحبك · 28 سنة</span></div></div>
+    
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>اتفضل. إيه المشكلة؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>يا دكتور عندي حكة جامدة في إيدي وفي ثنية الكوع، بقالها حوالي تلات أسابيع.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>وريني. <span class="stage">الدكتورة/الدكتور يبص على الجلد</span> في احمرار وجفاف وقشور، وفي آثار هرش.</p></div>
+<div class="line p"><span class="who">المريض</span><p>آه، بهرش غصب عني، خصوصاً بالليل.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>حصلك كده قبل كده؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>وأنا صغير كان عندي حاجة زي كده، وكان عندي <b class="term">حساسية صدر</b> برضه.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>في حد في العيلة عنده <b class="term">asthma</b> أو حساسية؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>أختي عندها حساسية جيوب أنفية.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>تمام. ده شكله <b class="term">atopic dermatitis</b>، أو <b class="term">eczema</b>. هو مرتبط بالحساسية، وبيروح ويرجع.</p></div>
+<div class="line p"><span class="who">المريض</span><p>هو معدي؟</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>لأ خالص، مش معدي. بس في حاجات بتهيّجه. بتستخدم صابون إيه؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>صابون عادي، وبغسل المواعين كتير من غير جوانتي.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>آه، المنظفات دي بتهيّج جداً. لازم تلبس جوانتي.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>هكتبلك <b class="term">Fucicort cream</b>، ده فيه <b class="term">steroid</b> ومضاد حيوي، تحطه على المكان <b class="term">مرتين في اليوم</b> لمدة <b class="term">7 أيام</b> بس، مش أكتر.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ليه مش أكتر؟</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>عشان الـ <b class="term">topical steroid</b> لو استخدمته فترة طويلة ممكن يعمل <b class="term">skin atrophy</b>، يعني الجلد يرقّ.</p></div>
+<div class="line p"><span class="who">المريض</span><p>آه فهمت.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>وبعد كده ترطيب كتير. هتستخدم <b class="term">Cetaphil moisturizing cream</b> <b class="term">تلات مرات في اليوم</b> على الأقل، وخصوصاً بعد الدش على طول والجلد لسه رطب.</p></div>
+<div class="line p"><span class="who">المريض</span><p>كل يوم؟</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>كل يوم، حتى لما الإكزيما تروح. ده الـ <b class="term">maintenance</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>وللحكة بالليل هتاخد <b class="term">Zyrtec</b> <b class="term">10 مللي</b> حباية <b class="term">قبل النوم</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ده بينيّم؟</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>ممكن يعمل نعاس بسيط، عشان كده بالليل.</p></div>
+<div class="line p"><span class="who">المريض</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>والدش يكون مية فاترة مش سخنة، ومتطولش فيه. والهدوم قطن، بلاش صوف.</p></div>
+<div class="line p"><span class="who">المريض</span><p>حاضر.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>لو بعد أسبوع مفيش تحسن، أو ظهر صديد أو سخونية، تيجي تاني نشوف.</p></div>
+<div class="line p"><span class="who">المريض</span><p>متشكر يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c06">التالي ← 06 · عظام / ألم أسفل الظهر</a><a class="step" href="#c04">→ السابق 04 · جهاز هضمي / جرثومة المعدة</a></nav>
+</section>
+<section class="case" id="c06" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 06</p>
+    <h2>عظام / ألم أسفل الظهر</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>مصطلحات أشعة وتشريح بالإنجليزي، فحص إكلينيكي، عدد جلسات ومدد</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>4 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريض</span><span>صاحبك · 42 سنة</span></div></div>
+    
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>أهلاً، اتفضل. إيه اللي تاعبك؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>يا دكتور ضهري واجعني جداً، تحت خالص، والوجع بينزل في رجلي الشمال.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>من امتى؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>من حوالي عشر أيام. كنت بشيل كرتونة تقيلة في الشغل وحسيت بحاجة طقت في ضهري.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الوجع بينزل لحد فين في الرجل؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>لحد ورا الركبة، وساعات لحد صباع رجلي الكبير.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في تنميل أو ضعف في الرجل؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>تنميل آه، ضعف لأ.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في مشكلة في الحمام؟ تحكم في البول أو البراز؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>لأ، الحمد لله عادي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>كويس جداً، ده مهم. اتمدد على السرير كده. <span class="stage">المريض يتمدد، الدكتور يكشف</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هرفع رجلك اليمين... في وجع؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>لأ.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>والشمال... <span class="stage">الدكتور يرفع الرجل</span></p></div>
+<div class="line p"><span class="who">المريض</span><p>آه آه، هنا بيوجع ونازل في رجلي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام. الـ <b class="term">straight leg raise</b> <b class="term">positive</b> في الشمال عند <b class="term">40 درجة</b>. والـ <b class="term">reflexes</b> كويسة، والقوة كويسة.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يعني إيه يا دكتور؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>غالباً عندك <b class="term">disc herniation</b>، انزلاق غضروفي، وضاغط على العصب، وده اللي عامل <b class="term">sciatica</b>، عرق النسا.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يا ساتر. محتاج عملية؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لأ، أغلب الحالات دي بتتحسن من غير عملية. بس عايز <b class="term">MRI</b> على <b class="term">lumbosacral spine</b> عشان نتأكد من المستوى. غالباً <b class="term">L4-L5</b> أو <b class="term">L5-S1</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>العلاج: <b class="term">Arcoxia</b> <b class="term">90 مللي</b> حباية <b class="term">مرة في اليوم</b> بعد الأكل لمدة <b class="term">7 أيام</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>حاضر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>و<b class="term">Neurovit</b> حباية <b class="term">مرتين في اليوم</b> للأعصاب لمدة <b class="term">شهر</b>. ومرخي عضلات <b class="term">Myolgin</b> <b class="term">مرتين في اليوم</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>الميولجين ده بينيّم؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ممكن يعمل نعاس بسيط، بلاش تسوق وإنت واخده.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ومتنامش على السرير طول اليوم، الحركة الخفيفة أحسن. بس بلاش شيل تقيل خالص وبلاش انحناء.</p></div>
+<div class="line p"><span class="who">المريض</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وبعد أسبوع لما الوجع يهدى، هتبدأ <b class="term">physiotherapy</b>، <b class="term">10 جلسات</b> علاج طبيعي، تلات مرات في الأسبوع.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ولو حصل ضعف في رجلك، أو مشكلة في التحكم في البول، تيجي الطوارئ فوراً. ده اسمه <b class="term">cauda equina</b>، ونادر بس خطير.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ربنا يستر. حاضر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هات الـ <b class="term">MRI</b> ونشوفك بعد <b class="term">أسبوعين</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>متشكر يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c07">التالي ← 07 · أطفال / التهاب الأذن الوسطى</a><a class="step" href="#c05">→ السابق 05 · جلدية / إكزيما</a></nav>
+</section>
+<section class="case" id="c07" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 07</p>
+    <h2>أطفال / التهاب الأذن الوسطى</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>جرعات بالـ ml والوزن، متكلم مش &quot;المريض&quot; (الأم)، أرقام حرارة ووزن</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>3–4 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag c">الأم</span><span>صاحبك · الطفل نفسه مش بيتكلم</span></div></div>
+    <div class="notes"><p>هنا التاني هيمثّل <strong>الأم</strong> (C)، مش المريض. ده بيختبر هل الـ classifier هيفهم إن اللي بيتكلم مش المريض نفسه.</p></div>
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>أهلاً يا مدام، اتفضلي. ماله البطل؟</p></div>
+<div class="line c"><span class="who">الأم</span><p>يا دكتور ابني عنده سخونية من يومين، ومش بينام بالليل خالص، وعمال يشد في ودنه.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>عنده كام سنة؟</p></div>
+<div class="line c"><span class="who">الأم</span><p><b class="term">3 سنين</b> وشهرين.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وزنه كام؟</p></div>
+<div class="line c"><span class="who">الأم</span><p>آخر مرة وزناه كان <b class="term">14 كيلو</b>.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام. السخونية وصلت لكام؟</p></div>
+<div class="line c"><span class="who">الأم</span><p>امبارح بالليل كانت <b class="term">39</b>، وادتله <b class="term">Cetal</b> ونزلت شوية.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ادتيله كام من الـ <b class="term">Cetal</b>؟</p></div>
+<div class="line c"><span class="who">الأم</span><p>معلقة صغيرة، حوالي <b class="term">5 ml</b>.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام. في رشح أو كحة؟</p></div>
+<div class="line c"><span class="who">الأم</span><p>آه كان عنده رشح قبلها بكام يوم.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بياكل كويس؟ بيرجّع؟</p></div>
+<div class="line c"><span class="who">الأم</span><p>أكله قليل، بس مش بيرجّع. وبيشرب عادي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>كويس. خليني أكشف على ودنه. <span class="stage">الدكتور يكشف بالـ otoscope</span> امسكيه كده كويس.</p></div>
+<div class="line c"><span class="who">الأم</span><p>معلش يا حبيبي، شوية بس.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الودن اليمين سليمة. الشمال الطبلة حمرا ومنفوخة. ده <b class="term">acute otitis media</b>، التهاب في الأذن الوسطى.</p></div>
+<div class="line c"><span class="who">الأم</span><p>يعني محتاج مضاد حيوي؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، في الحالة دي محتاج. هكتبله <b class="term">Augmentin 457</b> شراب، <b class="term">4 ml</b> كل <b class="term">12 ساعة</b> لمدة <b class="term">7 أيام</b>.</p></div>
+<div class="line c"><span class="who">الأم</span><p>أربعة ml مرتين في اليوم.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بالظبط، بالسرنجة اللي في العلبة، مش بالمعلقة. وبعد الأكل عشان ميعملش مغص.</p></div>
+<div class="line c"><span class="who">الأم</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وللسخونية والوجع <b class="term">Cetal</b> شراب <b class="term">7 ml</b> كل <b class="term">6 ساعات</b> لو الحرارة فوق <b class="term">38</b>. متزوديش عن <b class="term">4 مرات</b> في اليوم.</p></div>
+<div class="line c"><span class="who">الأم</span><p>يعني أزوّد الجرعة عن اللي كنت بديهاله؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، الـ <b class="term">5 ml</b> كانت قليلة على وزنه. <b class="term">7 ml</b> هي الصح لـ <b class="term">14 كيلو</b>.</p></div>
+<div class="line c"><span class="who">الأم</span><p>آه، ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ونقط <b class="term">Otrivin</b> أطفال للمناخير، <b class="term">نقطة في كل ناحية مرتين في اليوم</b>، <b class="term">3 أيام</b> بس.</p></div>
+<div class="line c"><span class="who">الأم</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لو السخونية مانزلتش بعد <b class="term">48 ساعة</b> من المضاد، أو طلع صديد من الودن، أو بقى نايم كتير ومش بيرد عليكي، تيجي على طول.</p></div>
+<div class="line c"><span class="who">الأم</span><p>حاضر يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ونشوفه بعد ما يخلص العلاج نطمن على الطبلة.</p></div>
+<div class="line c"><span class="who">الأم</span><p>متشكرة جداً.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ألف سلامة عليه.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c08">التالي ← 08 · صداع نصفي مع مقاطعة وكلام فوق بعض</a><a class="step" href="#c06">→ السابق 06 · عظام / ألم أسفل الظهر</a></nav>
+</section>
+<section class="case" id="c08" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 08</p>
+    <h2>صداع نصفي مع مقاطعة وكلام فوق بعض</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>الـ diarization في أسوأ حالاته: مقاطعة، جمل قصيرة، كلام فوق بعض</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>4 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريضة</span><span>صاحبك · قلقانة وبتقاطع كتير</span></div></div>
+    <div class="notes"><p><strong>مهم:</strong> في الأماكن المكتوب فيها <code>((overlap))</code>، المريض يبدأ يتكلم <strong>قبل</strong> ما الدكتور يخلص جملته. واتكلموا فوق بعض بجد لمدة ثانية أو اتنين. والردود القصيرة (آه، أيوه، ماشي) قولوها والتاني لسه بيتكلم.</p><p>&gt; بعد التسجيل، اكتب الكلام اللي اتقال فوق بعض مرتين: مرة في سطر كل واحد، بنفس الترتيب اللي في السكريبت.</p></div>
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>اتفضلي. إيه اللي <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line p"><span class="who">المريضة</span><p>يا دكتور أنا الصداع هيموتني، مش قادرة بجد.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>طيب اهدي، هنشوف. الصداع ده من امتى؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>من سنين، بس الفترة دي زاد جداً، تقريباً مرتين تلاتة في الأسبوع.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بيبقى في ناحية واحدة ولا <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line p"><span class="who">المريضة</span><p>ناحية واحدة، الشمال غالباً، وبيبقى بينبض كده.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بيقعد قد إيه؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يوم كامل ساعات. يعني من الصبح لـ <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لحد ما تنامي.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>آه بالظبط.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في غثيان معاه؟ ضوء بيضايقك؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>آه آه، النور والصوت مش بستحملهم، وبرجّع ساعات.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>قبل الصداع بتشوفي <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line p"><span class="who">المريضة</span><p>زي خطوط لامعة كده؟ آه! بشوف زجزاج قدام عيني قبلها بربع ساعة.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ده اسمه <b class="term">aura</b>. يبقى ده <b class="term">migraine with aura</b>، صداع نصفي.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يعني مش ورم؟ أنا كنت خايفة يكون <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>لأ لأ، الأعراض دي مش أعراض ورم. اطمني.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>الحمد لله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بتاخدي إيه لما يجيلك؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>باخد <b class="term">Cataflam</b> <b class="term">50</b>، وساعات اتنين ورا بعض، وساعات <b class="term">Panadol Extra</b>.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>كام مرة في الشهر بتاخدي مسكنات؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يمكن <b class="term">15 يوم</b> في الشهر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ده كتير. ده نفسه ممكن يعمل <b class="term">medication overuse headache</b>.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>يعني المسكن بيعمل صداع؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه، لو كتير. عشان كده هنغيّر الخطة. لما الصداع يبدأ تاخدي <b class="term">Imigran</b> <b class="term">50 مللي</b> حباية <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line p"><span class="who">المريضة</span><p>أول ما يبدأ؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>أول ما يبدأ بالظبط، متستنيش. وممكن تاخدي التانية بعد <b class="term">ساعتين</b> لو مارحش، بس مش أكتر من <b class="term">2 في اليوم</b>.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وعشان نقلل عدد المرات، هتاخدي <b class="term">Inderal</b> <b class="term">10 مللي</b> <b class="term">مرتين في اليوم</b> كل يوم، حتى لو مفيش صداع.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>كل يوم؟ لحد امتى؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p><b class="term">3 شهور</b> على الأقل، ونشوف.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>ماشي، ماشي.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وعندك ربو أو <span class="cue">↯ هنا التاني يقاطع</span></p></div>
+<div class="line p"><span class="who">المريضة</span><p>لأ مفيش ربو.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام، عشان الـ <b class="term">Inderal</b> مينفعش مع الربو. واكتبي مفكرة صداع: امتى جه، قعد قد إيه، وكنتي واكلة إيه.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>حاضر.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>والنوم منتظم، ومتفوتيش وجبات، وقللي القهوة.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>حاضر يا دكتور. شكراً جداً.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>نشوفك بعد <b class="term">شهر</b> بالمفكرة. ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c09">التالي ← 09 · متابعة سكر في مكان فيه دوشة (نفس كشف 01)</a><a class="step" href="#c07">→ السابق 07 · أطفال / التهاب الأذن الوسطى</a></nav>
+</section>
+<section class="case" id="c09" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 09</p>
+    <h2>متابعة سكر في مكان فيه دوشة (نفس كشف 01)</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>تأثير الدوشة: نفس كلام كشف 01 بالظبط، بس في بيئة فيها صوت</dd></div>
+      <div><dt>المكان</dt><dd>أوضة فيها دوشة: تكييف أو مروحة شغالة + تلفزيون أو راديو واطي + باب مفتوح على صالة</dd></div>
+      <div><dt>المدة</dt><dd>4–5 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريض</span><span>صاحبك</span></div></div>
+    <div class="notes"><p>سجّل ده <strong>بعد</strong> كشف 01، بنفس الـ laptop ونفس القعدة، وغيّر الدوشة بس. كده الفرق في النتايج بين 01 و09 يبقى من الدوشة لوحدها.</p><p>&gt; اتكلموا بنفس السكريبت، بس الـ ground truth بتاعه <strong>مستقل</strong>: عدّله على اللي اتقال فعلاً في التسجيل ده.</p></div>
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتور</span><p>أهلاً يا حاج، اتفضل استريح. عامل إيه النهارده؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>الحمد لله يا دكتور، ماشي الحال. جاي أتابع السكر زي ما قولتلي المرة اللي فاتت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>تمام. عملت التحاليل اللي طلبناها؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>أيوه، عملتها الأسبوع اللي فات، أهي معايا. <span class="stage">المريض يدّي الورق لـ الدكتور</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>خليني أشوف. الـ <b class="term">HbA1c</b> طالع <b class="term">8.2</b>، والمرة اللي فاتت كان <b class="term">7.6</b>. يعني زاد شوية.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يا خبر، ده وحش؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>مش وحش أوي، بس مش مظبوط. إحنا عايزينه تحت <b class="term">7</b>. والسكر الصايم كام؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>الصايم كان <b class="term">160</b>، والفاطر بعد ساعتين كان <b class="term">240</b>.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>طيب. إنت ماشي على العلاج إزاي دلوقتي؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>باخد <b class="term">Glucophage</b> <b class="term">1000</b> الصبح وبالليل، وحباية <b class="term">Amaryl</b> <b class="term">2 مللي</b> قبل الفطار.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بتاخدهم بانتظام؟ ولا بتنسى؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>بصراحة يا دكتور ساعات بنسى جرعة الليل، خصوصاً لما أكون برا البيت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ده مهم جداً. الـ <b class="term">Metformin</b> لازم ياخد وقته وبانتظام. والأكل عامل إيه؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>الأكل مش أحسن حاجة، رمضان كان قريب والعزومات كتير، وبحب الرز والعيش.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>ماشي، ده بيفرق جامد. في أي أعراض؟ عطش زيادة؟ دخول حمام كتير بالليل؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>آه العطش موجود، وبقوم بالليل مرتين تلاتة.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>في تنميل في رجلك أو حرقان؟</p></div>
+<div class="line p"><span class="who">المريض</span><p>ساعات تنميل في صوابع الرجل، بس مش على طول.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>طيب ده محتاجين نتابعه. هقيس لك الضغط دلوقتي. <span class="stage">الدكتور يقيس الضغط</span></p></div>
+<div class="line d"><span class="who">الدكتور</span><p>الضغط <b class="term">130 على 85</b>، كويس. والوزن النهارده <b class="term">92 كيلو</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>زاد كيلو تقريباً عن المرة اللي فاتت.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>آه. بص يا حاج، التحاليل التانية كويسة، الـ <b class="term">creatinine</b> <b class="term">0.9</b> يعني الكلى سليمة الحمد لله.</p></div>
+<div class="line p"><span class="who">المريض</span><p>الحمد لله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هنعمل كده: هنزوّد الـ <b class="term">Amaryl</b> لـ <b class="term">3 مللي</b> قبل الفطار، والـ <b class="term">Glucophage</b> زي ما هو <b class="term">1000 مرتين في اليوم</b>.</p></div>
+<div class="line p"><span class="who">المريض</span><p>يعني حباية الأماريل تبقى تلاتة بدل اتنين؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>بالظبط، <b class="term">3 مللي</b>. بس خلي بالك، لو حسيت برعشة أو عرق أو دوخة، ده ممكن يكون <b class="term">hypoglycemia</b>، يعني السكر وطي. ساعتها تاكل حاجة مسكرة على طول وتقيس.</p></div>
+<div class="line p"><span class="who">المريض</span><p>ماشي يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وعايزك تقيس السكر في البيت، صايم وبعد الأكل بساعتين، تلات مرات في الأسبوع، وتكتبهم في ورقة.</p></div>
+<div class="line p"><span class="who">المريض</span><p>عندي جهاز في البيت، هقيس إن شاء الله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>وكمان عايز <b class="term">fundus examination</b> عند دكتور العيون، وتحليل <b class="term">urine albumin</b> عشان نطمن على الكلى.</p></div>
+<div class="line p"><span class="who">المريض</span><p>حاضر. ورجلي؟</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هكتبلك <b class="term">Milga</b> حباية <b class="term">مرة في اليوم</b> للتنميل، وخلي بالك من رجلك، أي جرح تبعتلي على طول.</p></div>
+<div class="line p"><span class="who">المريض</span><p>تمام.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>والمشي يا حاج، نص ساعة كل يوم، وقلل الرز والعيش الأبيض.</p></div>
+<div class="line p"><span class="who">المريض</span><p>هحاول والله.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>هنشوفك بعد <b class="term">3 شهور</b> بتحليل <b class="term">HbA1c</b> جديد. لو في أي حاجة قبل كده كلمني.</p></div>
+<div class="line p"><span class="who">المريض</span><p>متشكر يا دكتور، ربنا يخليك.</p></div>
+<div class="line d"><span class="who">الدكتور</span><p>العفو، ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><a class="step" href="#c10">التالي ← 10 · غدة درقية (إنجليزي كتير / code-switching عالي)</a><a class="step" href="#c08">→ السابق 08 · صداع نصفي مع مقاطعة وكلام فوق بعض</a></nav>
+</section>
+<section class="case" id="c10" hidden>
+  <header class="case-head">
+    <p class="eyebrow">كشف 10</p>
+    <h2>غدة درقية (إنجليزي كتير / code-switching عالي)</h2>
+    <dl class="facts">
+      <div><dt>بيختبر</dt><dd>Code-switching عالي: جمل نصها إنجليزي، أرقام بوحدات، مصطلحات endocrine</dd></div>
+      <div><dt>المكان</dt><dd>أوضة هادية</dd></div>
+      <div><dt>المدة</dt><dd>4 دقايق</dd></div>
+    </dl>
+    <div class="cast"><div class="cast-row"><span class="tag d">الدكتورة/الدكتور</span><span>انت</span></div><div class="cast-row"><span class="tag p">المريضة</span><span>صاحبك · 32 سنة</span></div></div>
+    <div class="notes"><p>هنا الاتنين بيخلطوا عربي وإنجليزي <strong>كتير</strong>، زي كلام الناس في الشركات. اقروها بالنطق الطبيعي.</p></div>
+  </header>
+  <div class="dialogue">
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>Hi، اتفضلي. So، إيه اللي جايبك؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>بصي يا دكتور، I've been feeling tired all the time، بقالي حوالي three months. Like، بصحى tired حتى لو نمت eight hours.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>Okay. في حاجة تانية؟ Weight gain؟ Hair loss؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Yes، زاد وزني تقريباً <b class="term">5 كيلو</b> من غير ما أغيّر الـ diet، وشعري بيقع كتير.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>وبتحسي بالبرد أكتر من اللي حواليكي؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Exactly! الكل في الـ office بيبقى مشغّل الـ AC وأنا بموت من البرد.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>والـ period منتظمة؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>لأ، بقت heavier وirregular شوية.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>Okay، عملتي أي labs؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Yes، عملت <b class="term">TSH</b> و<b class="term">Free T4</b>. الـ <b class="term">TSH</b> كان <b class="term">7.5</b>.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>والـ <b class="term">Free T4</b>؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p><b class="term">0.9</b>، والـ reference range مكتوب <b class="term">0.8 to 1.8</b>.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>Okay. الـ <b class="term">TSH</b> high والـ <b class="term">Free T4</b> في الـ low normal. ده اسمه <b class="term">subclinical hypothyroidism</b>، بس مع الـ symptoms اللي عندك، I think محتاجين نعالج.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Is it serious؟</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>No، it's very common، خصوصاً في الستات. والعلاج سهل. بس عايزة أعرف السبب. هنعمل <b class="term">anti-TPO antibodies</b>، عشان لو positive يبقى غالباً <b class="term">Hashimoto's thyroiditis</b>.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Okay.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>وكمان <b class="term">thyroid ultrasound</b> عشان نشوف شكل الغدة. خليني أكشف على رقبتك. <span class="stage">الدكتورة/الدكتور تكشف</span> Swallow please.</p></div>
+<div class="action"><span class="stage">المريضة تبلع</span></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>الغدة <b class="term">mildly enlarged</b> شوية، بس مفيش <b class="term">nodules</b> واضحة.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Okay.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>هنبدأ <b class="term">Eltroxin</b> <b class="term">50 microgram</b> مرة واحدة في اليوم، الصبح على الريق، <b class="term">نص ساعة قبل الفطار</b> والقهوة.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>حتى قبل الـ coffee؟</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>خصوصاً الـ coffee، it affects the absorption. ولو بتاخدي <b class="term">calcium</b> أو <b class="term">iron</b> supplements، خليهم بعد <b class="term">4 ساعات</b> على الأقل.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>باخد <b class="term">Ferrotron</b> آه.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>Okay، يبقى خليه بالليل.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Got it.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>وفي حاجة مهمة: إنتي planning for pregnancy قريب؟</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Maybe next year.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>Good to know، لأن ساعتها الجرعة هتحتاج adjustment، والـ target بتاع الـ <b class="term">TSH</b> بيبقى أقل من <b class="term">2.5</b>. لو حصل حمل تكلميني على طول.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Sure.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>هنعيد <b class="term">TSH</b> بعد <b class="term">6 weeks</b>، ونظبط الجرعة على حسبه.</p></div>
+<div class="line p"><span class="who">المريضة</span><p>Six weeks. Okay. Thank you so much يا دكتور.</p></div>
+<div class="line d"><span class="who">الدكتورة/الدكتور</span><p>You're welcome، ألف سلامة.</p></div>
+  </div>
+  <nav class="pager"><span></span><a class="step" href="#c09">→ السابق 09 · متابعة سكر في مكان فيه دوشة (نفس كشف 01)</a></nav>
+</section>
+</main>
+
+<script>
+(function () {
+  var views = Array.prototype.slice.call(document.querySelectorAll('main > section'));
+  var links = Array.prototype.slice.call(document.querySelectorAll('.strip a'));
+  function show() {
+    var id = (location.hash || '#home').slice(1);
+    if (!document.getElementById(id)) id = 'home';
+    views.forEach(function (v) { v.hidden = v.id !== id; });
+    links.forEach(function (a) {
+      var on = a.getAttribute('data-target') === id;
+      a.setAttribute('aria-current', on ? 'true' : 'false');
+      if (on && a.scrollIntoView) a.scrollIntoView({ block: 'nearest', inline: 'center' });
+    });
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', show);
+  show();
+
+  var size = 19;
+  try { var saved = parseInt(localStorage.getItem('readSize'), 10); if (saved >= 15 && saved <= 30) size = saved; } catch (e) {}
+  function apply() {
+    document.documentElement.style.setProperty('--read', size + 'px');
+    try { localStorage.setItem('readSize', String(size)); } catch (e) {}
+  }
+  document.getElementById('smaller').addEventListener('click', function () { size = Math.max(15, size - 2); apply(); });
+  document.getElementById('larger').addEventListener('click', function () { size = Math.min(30, size + 2); apply(); });
+  apply();
+
+  // Keep the phone screen on while reading a script.
+  var lock = null;
+  function wake() {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function (l) { lock = l; }).catch(function () {});
+  }
+  document.addEventListener('visibilitychange', wake);
+  wake();
+})();
+</script>
